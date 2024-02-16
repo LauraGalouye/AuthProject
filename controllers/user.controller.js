@@ -2,10 +2,9 @@ const User = require('../models/user.model');
 const emailValidator = require('email-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { restart } = require('nodemon');
 
 const createUser = async(req, res) => {
-
+    const user = new User(req.body);
     const {email, password} = req.body;
 
     if (!email || !password) {
@@ -28,12 +27,9 @@ const createUser = async(req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const savedUser = await new User({
-            email,
-            password: hashedPassword
-        }).save();
+        const authToken = await user.generateAuthTokenAndSaveUser();
+        res.status(201).json({user, authToken});
        
-        res.status(201).json({user : savedUser, message: 'User created successfully'});
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
